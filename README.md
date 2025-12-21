@@ -1,0 +1,1 @@
+"# be-inventory-rust" 
