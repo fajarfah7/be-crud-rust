@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 use crate::company::domain::company::Company;
 use crate::company::repository::company_repository::CompanyRepository;
-use crate::company::usecase;
+use crate::company::usecase::dto::ListCompanyResult;
 use crate::request::pagination::PaginationRequest;
 
 pub struct CompanyUsecase<R: CompanyRepository> {
@@ -113,7 +113,10 @@ impl<R: CompanyRepository> CompanyUsecase<R> {
             .map_err(|_| CompanyUsecaseError::DatabaseError)
     }
 
-    pub async fn delete_company(&self, id: Uuid) -> Result<(), CompanyUsecaseError> {
+    pub async fn delete_company(
+        &self, 
+        id: Uuid
+    ) -> Result<(), CompanyUsecaseError> {
         let get_company = self
             .repo
             .get_company_by_id(&id)
@@ -132,16 +135,20 @@ impl<R: CompanyRepository> CompanyUsecase<R> {
     pub async fn list_company(
         &self,
         query: &PaginationRequest,
-    ) -> Result<Vec<Company>, CompanyUsecaseError> {
+    ) -> Result<ListCompanyResult, CompanyUsecaseError> {
         let total_company = self
             .repo
             .count_all_companies(&query)
             .await
-            .map_err(|_| CompanyUsecaseError::DatabaseError);
+            .map_err(|_| CompanyUsecaseError::DatabaseError)?;
 
-        self.repo
+        // let total_page: u32 = (total_company as f64 / (query.per_page.unwrap_or(1) as f64)).ceil() as u32;
+
+        let companies = self.repo
             .find_all_companies(&query)
             .await
-            .map_err(|_| CompanyUsecaseError::DatabaseError)
+            .map_err(|_| CompanyUsecaseError::DatabaseError)?;
+
+        Ok(ListCompanyResult { data: companies, total_data: total_company })
     }
 }

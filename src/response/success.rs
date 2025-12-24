@@ -1,7 +1,5 @@
 use axum::{
-    Json,
-    http::StatusCode,
-    response::{IntoResponse, Response},
+    Json, body, http::StatusCode, response::{IntoResponse, Response}
 };
 use serde::Serialize;
 
@@ -27,6 +25,7 @@ struct PaginationMeta {
 #[derive(Debug)]
 pub enum ResponseSuccess<T> {
     Success(StatusCode, Option<T>),
+    SuccessPaginated(u32, u32, u64, Option<T>),
 }
 
 impl<T> IntoResponse for ResponseSuccess<T>
@@ -45,6 +44,23 @@ where
                 Json(body)
             })
                 .into_response(),
+            ResponseSuccess::SuccessPaginated(page, per_page, total_data, data) => (StatusCode::OK, {
+                // let total_page: u32 = (total_company as f64 / (query.per_page.unwrap_or(1) as f64)).ceil() as u32;
+                let total_page = (total_data as f64 / per_page as f64).ceil() as u32;
+                let meta: PaginationMeta = PaginationMeta { 
+                    page,
+                    per_page, 
+                    total_data, 
+                    total_page,
+                };
+                let body: ResponseSuccessBody<T> = ResponseSuccessBody {
+                    message: "success".into(),
+                    http_code: StatusCode::OK.as_u16(),
+                    data: data,
+                    meta: Some(meta),
+                };
+                Json(body)
+            }).into_response()
         }
     }
 }

@@ -82,11 +82,15 @@ pub async fn get_companies_handler<R: CompanyRepository>(
         search: Some(search),
         sort: Some(sort),
     };
-    let companies = usecase
+    let company_list_data = usecase
         .list_company(&query)
         .await
         .map_err(map_usecase_company_error)?;
 
-    // Ok((StatusCode::OK, Json(companies)))
-    Ok(ResponseSuccess::Success(StatusCode::OK, Some(companies)))
+    Ok(ResponseSuccess::SuccessPaginated(
+        page, 
+        per_page, 
+        company_list_data.total_data as u64, 
+        Some(company_list_data.data),
+    ))
 }
