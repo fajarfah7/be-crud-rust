@@ -1,2 +1,1 @@
-"# be-inventory-rust" 
-cargo sqlx prepare
+"# be-crud-rust" 
