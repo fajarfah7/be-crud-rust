@@ -1,5 +1,13 @@
-use axum::{http::StatusCode, response::{IntoResponse, Response}};
+use axum::{Json, http::StatusCode, response::{IntoResponse, Response}};
+use serde::Serialize;
 use core::fmt;
+
+#[derive(Serialize, Debug)]
+pub struct ResponseErrorBody {
+    status: u16,
+    message: String,
+    detail: Option<String>,
+}
 
 #[derive(Debug)]
 pub enum ResponseError {
@@ -22,9 +30,30 @@ impl fmt::Display for ResponseError {
 impl IntoResponse for ResponseError {
     fn into_response(self) -> Response {
         match self {
-            ResponseError::BadRequest(msg) => (StatusCode::BAD_REQUEST, msg).into_response(),
-            ResponseError::NotFound(msg) => (StatusCode::NOT_FOUND, msg).into_response(),
-            ResponseError::DatabaseError => (StatusCode::INTERNAL_SERVER_ERROR, "storage error").into_response(),
+            ResponseError::BadRequest(msg) => (StatusCode::BAD_REQUEST, {
+                let body = ResponseErrorBody {
+                    status: StatusCode::BAD_REQUEST.as_u16(),
+                    message: msg,
+                    detail: None,
+                };
+                Json(body)
+            }).into_response(),
+            ResponseError::NotFound(msg) => (StatusCode::NOT_FOUND, {
+                let body = ResponseErrorBody {
+                    status: StatusCode::NOT_FOUND.as_u16(),
+                    message: msg,
+                    detail: None,
+                };
+                Json(body)
+            }).into_response(),
+            ResponseError::DatabaseError => (StatusCode::INTERNAL_SERVER_ERROR, {
+                let body = ResponseErrorBody {
+                    status: StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                    message: "internal server error".into(),
+                    detail: Some("critical storage error".into()),
+                };
+                Json(body)
+            }).into_response(),
             // ResponseError::InternalServerError => (StatusCode::INTERNAL_SERVER_ERROR, "internal server error").into_response(),
         }
     }

@@ -7,7 +7,7 @@ use axum::{
 use std::sync::Arc;
 use uuid::Uuid;
 
-use crate::{company::handler::types::ProcessCompanyRequest, request::pagination::PaginationRequest};
+use crate::{company::handler::types::ProcessCompanyRequest, request::{pagination::PaginationRequest, path_uuid::PathUuid}};
 use crate::company::{
     handler::map_company_error::map_usecase_company_error,
     repository::company_repository::CompanyRepository,
@@ -17,6 +17,13 @@ use crate::company::{
 };
 use crate::response::error::ResponseError;
 use crate::response::success::ResponseSuccess;
+
+// order parameter in handler MUST
+// 1. STATE
+// 2. PATH
+// 3. QUERY
+// 4. HEADER / EXTENSION
+// 5. JSON / FORM / MULTIPART
 
 pub async fn create_company_handler<R: CompanyRepository>(
     State(usecase): State<Arc<CompanyUsecase<R>>>,
@@ -29,13 +36,13 @@ pub async fn create_company_handler<R: CompanyRepository>(
         .await
         .map_err(map_usecase_company_error)?;
 
-    Ok((StatusCode::CREATED, Json(company)))
+    Ok(ResponseSuccess::Object(StatusCode::CREATED, Some(company)))
 }
 
-pub async fn update_company<R: CompanyRepository>(
+pub async fn update_company_handler<R: CompanyRepository>(
     State(usecase): State<Arc<CompanyUsecase<R>>>,
+    PathUuid(id): PathUuid,
     Json(req): Json<ProcessCompanyRequest>,
-    Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, ResponseError> {
     validate_company_input(&req)?;
 
@@ -51,10 +58,10 @@ pub async fn update_company<R: CompanyRepository>(
         .await
         .map_err(map_usecase_company_error)?;
 
-    Ok((StatusCode::CREATED, Json(company)))
+    Ok(ResponseSuccess::Object(StatusCode::CREATED, Some(company)))
 }
 
-pub async fn delete_company<R: CompanyRepository>(
+pub async fn delete_company_handler<R: CompanyRepository>(
     State(usecase): State<Arc<CompanyUsecase<R>>>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, ResponseError> {
@@ -63,7 +70,7 @@ pub async fn delete_company<R: CompanyRepository>(
         .await
         .map_err(map_usecase_company_error)?;
 
-    Ok(StatusCode::OK)
+    Ok(ResponseSuccess::NoData::<()>(StatusCode::OK))
 }
 
 pub async fn get_companies_handler<R: CompanyRepository>(
@@ -87,7 +94,7 @@ pub async fn get_companies_handler<R: CompanyRepository>(
         .await
         .map_err(map_usecase_company_error)?;
 
-    Ok(ResponseSuccess::SuccessPaginated(
+    Ok(ResponseSuccess::Pagination(
         page, 
         per_page, 
         company_list_data.total_data as u64, 

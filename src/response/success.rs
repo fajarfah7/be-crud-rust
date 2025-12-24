@@ -1,9 +1,9 @@
 use axum::{
-    Json, body, http::StatusCode, response::{IntoResponse, Response}
+    Json,
+    http::StatusCode,
+    response::{IntoResponse, Response},
 };
 use serde::Serialize;
-
-use crate::request::pagination::PaginationRequest;
 
 #[derive(Serialize, Debug)]
 struct ResponseSuccessBody<T> {
@@ -24,8 +24,9 @@ struct PaginationMeta {
 
 #[derive(Debug)]
 pub enum ResponseSuccess<T> {
-    Success(StatusCode, Option<T>),
-    SuccessPaginated(u32, u32, u64, Option<T>),
+    NoData(StatusCode),
+    Object(StatusCode, Option<T>),
+    Pagination(u32, u32, u64, Option<T>),
 }
 
 impl<T> IntoResponse for ResponseSuccess<T>
@@ -34,7 +35,17 @@ where
 {
     fn into_response(self) -> Response {
         match self {
-            ResponseSuccess::Success(status, data) => (status, {
+            ResponseSuccess::NoData(status) => (status, {
+                let body: ResponseSuccessBody<T> = ResponseSuccessBody {
+                    message: "success".into(),
+                    http_code: status.as_u16(),
+                    data: None,
+                    meta: None,
+                };
+                Json(body)
+            })
+                .into_response(),
+            ResponseSuccess::Object(status, data) => (status, {
                 let body: ResponseSuccessBody<T> = ResponseSuccessBody {
                     message: "success".into(),
                     http_code: status.as_u16(),
@@ -44,13 +55,13 @@ where
                 Json(body)
             })
                 .into_response(),
-            ResponseSuccess::SuccessPaginated(page, per_page, total_data, data) => (StatusCode::OK, {
+            ResponseSuccess::Pagination(page, per_page, total_data, data) => (StatusCode::OK, {
                 // let total_page: u32 = (total_company as f64 / (query.per_page.unwrap_or(1) as f64)).ceil() as u32;
                 let total_page = (total_data as f64 / per_page as f64).ceil() as u32;
-                let meta: PaginationMeta = PaginationMeta { 
+                let meta: PaginationMeta = PaginationMeta {
                     page,
-                    per_page, 
-                    total_data, 
+                    per_page,
+                    total_data,
                     total_page,
                 };
                 let body: ResponseSuccessBody<T> = ResponseSuccessBody {
@@ -60,47 +71,49 @@ where
                     meta: Some(meta),
                 };
                 Json(body)
-            }).into_response()
+            })
+                .into_response(),
         }
     }
 }
 
-impl<T> ResponseSuccessBody<T>
-where
-    T: Serialize,
-{
-    pub fn success(status: StatusCode, data: Option<T>) -> impl IntoResponse {
-        let body: ResponseSuccessBody<T> = ResponseSuccessBody {
-            message: "success".into(),
-            http_code: status.as_u16(),
-            data: data,
-            meta: None,
-        };
-        (status, Json(body))
-    }
+// // IF WANT TO IMPLEMENT STRUCT FOR RESPONSE SUCCESS
+// impl<T> ResponseSuccessBody<T>
+// where
+//     T: Serialize,
+// {
+//     pub fn default(status: StatusCode, data: Option<T>) -> impl IntoResponse {
+//         let body: ResponseSuccessBody<T> = ResponseSuccessBody {
+//             message: "success".into(),
+//             http_code: status.as_u16(),
+//             data: data,
+//             meta: None,
+//         };
+//         (status, Json(body))
+//     }
 
-    pub fn paginated(
-        page: u32,
-        per_page: u32,
-        total_data: u64,
-        data: Option<T>,
-    ) -> impl IntoResponse {
-        let status = StatusCode::OK;
+//     pub fn pagination(
+//         page: u32,
+//         per_page: u32,
+//         total_data: u64,
+//         data: Option<T>,
+//     ) -> impl IntoResponse {
+//         let status = StatusCode::OK;
 
-        let total_page = ((total_data + per_page as u64 - 1) / per_page as u64) as u32;
+//         let total_page = ((total_data + per_page as u64 - 1) / per_page as u64) as u32;
 
-        let body: ResponseSuccessBody<T> = ResponseSuccessBody {
-            message: "success".into(),
-            http_code: status.as_u16(),
-            data: data,
-            meta: Some(PaginationMeta {
-                page: page,
-                per_page: per_page,
-                total_data: total_data,
-                total_page: total_page,
-            }),
-        };
+//         let body: ResponseSuccessBody<T> = ResponseSuccessBody {
+//             message: "success".into(),
+//             http_code: status.as_u16(),
+//             data: data,
+//             meta: Some(PaginationMeta {
+//                 page: page,
+//                 per_page: per_page,
+//                 total_data: total_data,
+//                 total_page: total_page,
+//             }),
+//         };
 
-        (status, Json(body))
-    }
-}
+//         (status, Json(body))
+//     }
+// }
