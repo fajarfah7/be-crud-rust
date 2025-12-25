@@ -6,7 +6,7 @@ use uuid::Uuid;
 use crate::company::domain::company::Company;
 use crate::company::repository::company_repository::CompanyRepository;
 use crate::company::repository::helper_query::apply_search_filter;
-use crate::request::pagination::PaginationRequest;
+use crate::app_request::pagination::PaginationRequest;
 
 pub struct CompanyRepositorySqlx {
     pool: PgPool,

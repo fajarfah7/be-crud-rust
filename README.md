@@ -1,5 +1,14 @@
 # be-crud-rust
 
+create migration with sqlx:
+```sqlx migrate add create_table_name```
+
+apply migration
+```sqlx migrate run```
+
+apply cache
+```cargo sqlx prepare```
+
 # impl From<A> for B
 * used to change type A to be type B(conversion)
 generally this is used to manage error manually, then programmer have full control against that error.</br>
@@ -40,3 +49,10 @@ impl<T> From<Wrapper<T>> for MyStruct<T> {
     }
 }
 ```
+
+# order parameter in handler MUST
+1. STATE
+2. PATH
+3. QUERY
+4. HEADER / EXTENSION
+5. JSON / FORM / MULTIPART

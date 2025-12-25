@@ -7,7 +7,7 @@ use axum::{
 use std::sync::Arc;
 use uuid::Uuid;
 
-use crate::{company::handler::types::ProcessCompanyRequest, request::{pagination::PaginationRequest, path_uuid::PathUuid}};
+use crate::{company::handler::types::ProcessCompanyRequest, app_request::{pagination::PaginationRequest, path_uuid::PathUuid}};
 use crate::company::{
     handler::map_company_error::map_usecase_company_error,
     repository::company_repository::CompanyRepository,
@@ -15,8 +15,8 @@ use crate::company::{
 use crate::company::{
     handler::map_company_error::validate_company_input, usecase::company_usecase::CompanyUsecase,
 };
-use crate::response::error::ResponseError;
-use crate::response::success::ResponseSuccess;
+use crate::app_response::error::ResponseError;
+use crate::app_response::success::ResponseSuccess;
 
 // order parameter in handler MUST
 // 1. STATE

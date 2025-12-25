@@ -1,7 +1,7 @@
 use crate::company::handler::types::ProcessCompanyRequest;
 use crate::company::usecase::company_usecase::CompanyUsecaseError;
-use crate::helper::helper::is_option_has_string_value;
-use crate::response::error::ResponseError;
+use crate::app_helper::helper::is_option_has_string_value;
+use crate::app_response::error::ResponseError;
 
 pub fn map_usecase_company_error(err: CompanyUsecaseError) -> ResponseError {
     match err {

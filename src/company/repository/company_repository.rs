@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use uuid::Uuid;
 use crate::company::domain::company::Company;
-use crate::request::pagination::PaginationRequest;
+use crate::app_request::pagination::PaginationRequest;
 
 #[async_trait]
 pub trait CompanyRepository: Send + Sync {

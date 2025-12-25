@@ -4,7 +4,7 @@ use axum::{
 };
 use uuid::Uuid;
 
-use crate::response::error::ResponseError;
+use crate::app_response::error::ResponseError;
 
 pub struct PathUuid(pub Uuid);
 

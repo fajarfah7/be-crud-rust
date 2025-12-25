@@ -1,10 +1,10 @@
 use chrono::Utc;
 use uuid::Uuid;
 
+use crate::app_request::pagination::PaginationRequest;
 use crate::company::domain::company::Company;
 use crate::company::repository::company_repository::CompanyRepository;
 use crate::company::usecase::dto::ListCompanyResult;
-use crate::request::pagination::PaginationRequest;
 
 pub struct CompanyUsecase<R: CompanyRepository> {
     repo: R,
@@ -73,6 +73,15 @@ impl<R: CompanyRepository> CompanyUsecase<R> {
         phone_number: Option<String>,
         address: Option<String>,
     ) -> Result<Company, CompanyUsecaseError> {
+        let get_company = self
+            .repo
+            .get_company_by_id(&id)
+            .await
+            .map_err(|_| CompanyUsecaseError::DatabaseError)?;
+        if get_company.is_none() {
+            return Err(CompanyUsecaseError::NotFound);
+        }
+
         let is_company_email_exist = self
             .repo
             .check_existing_company_email(&email, Some(&id))
@@ -91,15 +100,6 @@ impl<R: CompanyRepository> CompanyUsecase<R> {
             return Err(CompanyUsecaseError::CodeAlreadyExist);
         }
 
-        let get_company = self
-            .repo
-            .get_company_by_id(&id)
-            .await
-            .map_err(|_| CompanyUsecaseError::DatabaseError)?;
-        if get_company.is_none() {
-            return Err(CompanyUsecaseError::NotFound);
-        }
-
         let mut company = get_company.unwrap();
         company.name = name;
         company.code = code;
@@ -113,10 +113,7 @@ impl<R: CompanyRepository> CompanyUsecase<R> {
             .map_err(|_| CompanyUsecaseError::DatabaseError)
     }
 
-    pub async fn delete_company(
-        &self, 
-        id: Uuid
-    ) -> Result<(), CompanyUsecaseError> {
+    pub async fn delete_company(&self, id: Uuid) -> Result<(), CompanyUsecaseError> {
         let get_company = self
             .repo
             .get_company_by_id(&id)
@@ -144,11 +141,15 @@ impl<R: CompanyRepository> CompanyUsecase<R> {
 
         // let total_page: u32 = (total_company as f64 / (query.per_page.unwrap_or(1) as f64)).ceil() as u32;
 
-        let companies = self.repo
+        let companies = self
+            .repo
             .find_all_companies(&query)
             .await
             .map_err(|_| CompanyUsecaseError::DatabaseError)?;
 
-        Ok(ListCompanyResult { data: companies, total_data: total_company })
+        Ok(ListCompanyResult {
+            data: companies,
+            total_data: total_company,
+        })
     }
 }
